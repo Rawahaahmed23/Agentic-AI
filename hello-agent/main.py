@@ -1,23 +1,40 @@
-import  google.generativeai as genai
-import os 
+import os
 from dotenv import load_dotenv
+from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel
+from agents.run import RunConfig
 
 
 load_dotenv()
 
-api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)  
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
 
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+external_client = AsyncOpenAI(
+    api_key=gemini_api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+)
 
 
-try:
-    response = model.generate_content('what is noun give me 2 line explanation?')
-    print('Response')
-    print(response.text)
-    
+model = OpenAIChatCompletionsModel(
+    model="gemini-1.5-flash",
+    openai_client=external_client
+)
 
 
-except Exception as e:
-    print(e)
+config = RunConfig(
+    model=model,
+    model_provider=external_client
+)
+
+
+agent = Agent(
+    name="Assistant",
+    instructions="You are a helpful Assistant.",
+    model=model
+)
+
+
+result = Runner.run_sync(agent, "Tell me about recursion in programming.", run_config=config)
+
+print(result.final_output)
