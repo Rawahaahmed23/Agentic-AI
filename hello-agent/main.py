@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel
+from agents import Agent, Runner, AsyncOpenAI, OpenAIChatCompletionsModel,function_tool
 from agents.run import RunConfig
 
 
@@ -22,6 +22,16 @@ model = OpenAIChatCompletionsModel(
 )
 
 
+@function_tool
+def multipy(a:int,b:int)->int:
+    """Exact multiplication (use this instead of guessing math)."""
+    return a * b
+
+
+@function_tool
+def sum(a:int ,b:int)-> int: 
+    return a+b
+  
 config = RunConfig(
     model=model,
     model_provider=external_client
@@ -31,10 +41,11 @@ config = RunConfig(
 agent = Agent(
     name="Assistant",
     instructions="You are a helpful Assistant.",
-    model=model
+    model=model,
+     tools=[multipy, sum],  # 🛠️ Register tools here
 )
 
 
-result = Runner.run_sync(agent, "Tell me about recursion in programming.", run_config=config)
+result = Runner.run_sync(agent,  "what is 19 + 23 * 2?", run_config=config)
 
 print(result.final_output)
